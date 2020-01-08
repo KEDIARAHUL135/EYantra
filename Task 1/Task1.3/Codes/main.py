@@ -13,6 +13,8 @@ import numpy as np
 import os
 import math
 import csv
+import random
+
 import cv2.aruco as aruco
 from aruco_lib import *
 import copy
@@ -35,13 +37,74 @@ generated_folder_path = os.path.abspath(os.path.join('..', 'Generated'))
 ## imshow helps you view that you have loaded
 ## the corresponding image
 ############################################
+
+def wiener_filter(img, kernel, K):
+	kernel /= np.sum(kernel)
+	dummy = np.copy(img)
+	dummy = np.fft.fft2(dummy)
+	kernel = np.fft.fft2(kernel, s = img.shape)
+	kernel = np.conj(kernel) / (np.abs(kernel) ** 2 + K)
+	dummy = dummy * kernel
+	dummy = np.real(np.fft.ifft2(dummy))
+	return dummy
+
+    
 def process(ip_image):
     ###########################
     ## Your Code goes here
     ###########################
     id_list = []
+    
+    ip_image=ip_image[:720,:1280]
 
-    return ip_image, id_list
+        ## Brightness and contrast control
+    brightness=89
+    contrast=73
+    highlight = 255
+    alpha_b = (highlight - brightness)/255
+    gamma_b = brightness
+    ip_image = cv2.addWeighted(ip_image, alpha_b, ip_image, 0, gamma_b)
+    f = 131*(contrast + 127)/(127*(131-contrast))
+    alpha_c = f
+    gamma_c = 127*(1-f)
+    ip_image = cv2.addWeighted(ip_image, alpha_c, ip_image, 0, gamma_c)
+
+        # Kernel
+    kernel = np.zeros((20,20))
+    kernel[:,10]=54
+    b,g,r = cv2.split(ip_image)
+    K=0.0440
+##    temp=cv2.cvtColor(ip_image,cv2.COLOR_BGR2GRAY)
+##    temp_filter=wiener_filter(temp,kernel,K).astype('uint8')
+##    cv2.imshow('tem',temp_filter)
+    
+    filtered_img0 = wiener_filter(b, kernel,K)
+    filtered_img1 = wiener_filter(g, kernel,K)
+    filtered_img2= wiener_filter(r, kernel,K)
+    image=cv2.merge((filtered_img0,filtered_img1,filtered_img2))
+    
+    image=image.astype('uint8') 
+
+    cv2.waitKey(0) # waits until a key is pressed
+##    cv2.imshow('Bilateral Blurring', bilateral) 
+##    cv2.waitKey(0) 
+##    cv2.destroyAllWindows() 
+##    cv2.imshow("window", outp-filterut)
+##    cv2.waitKey(0);
+    temp_filter=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    det_aruco_list = detect_Aruco(image)
+	#print(det_aruco_list)
+    if det_aruco_list:
+            ip_image = mark_Aruco(image,det_aruco_list)
+            id_list = calculate_Robot_State(ip_image,det_aruco_list)
+            print(id_list)
+		# print min(robot_state.keys()), robot_state[(min(robot_state.keys()))]
+		# cv2.circle(img,(255,50),1,(0,255,0),2)
+		# cv2.imshow('marker', img)
+    cv2.imshow('image',ip_image)
+    print(id_list)
+    cv2.imwrite(generated_folder_path+"/"+"aruco_with_id.png",image)
+    return ip_image, id_list[25]
 
 
     
@@ -67,8 +130,7 @@ def main(val):
     ## reading in the frame
     ret, frame = cap.read()
     ## verifying frame has content
-    print(frame.shape)
-    ## display to see if the frame is correct
+    print(frame.shape)    ## display to see if the frame is correct
     cv2.imshow("window", frame)
     cv2.waitKey(0);
     ## calling the algorithm function
@@ -95,4 +157,5 @@ def main(val):
 ## main function
 ############################################################################################
 if __name__ == '__main__':
-    main(input("time value in seconds:"))
+    #main(input("time value in seconds:"))
+    main(31)

@@ -156,8 +156,8 @@ def process(ip_image):
     ip_image = cv2.circle(ip_image, (int(Height/2), int(Width/2)), FinalRadiusIn, (0,0,255), -1)
 
     
-    cv2.imshow("Masked", Mask)
-    cv2.imshow("Input", ip_image)
+    #cv2.imshow("Masked", Mask)
+    #cv2.imshow("Input", ip_image)
     
     for i in range(Height):
         for j in range(Width):

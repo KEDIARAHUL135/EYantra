@@ -156,14 +156,40 @@ def process(ip_image):
 
     Height, Width = ip_image.shape[:2]
     RD_row, RD_col = FindCentrePoint(Mask_RedDot)
+    print (RD_row, RD_col)
     GD_row, GD_col = FindCentrePoint(Mask_GreenDot)
+    print (GD_row, GD_col)
     WD_row = int(Height/2)
     WD_col = int(Width/2)
-
+    print (WD_row,WD_col)
     ip_image[RD_row, RD_col] = 0
     ip_image[GD_row, GD_col] = 0
     ip_image[WD_row, WD_col] = 0
-    
+##    RD_row -= WD_row
+##    GD_row -= WD_row
+##    WD_row -= WD_row
+##    RD_col -= WD_col
+##    GD_col -= WD_col
+##    WD_col -= WD_col
+    detected_circles= [ [RD_row-WD_row, RD_col - WD_col],
+                        [GD_row- WD_row, GD_col- WD_col]]
+    a= detected_circles
+    print (a)
+    print("**********************************")
+    z=a[0][0]*a[1][0]+a[0][1]*a[1][1]
+    print(z)
+    y=math.sqrt(a[0][0]**2+a[0][1]**2)
+    print(y)
+    x=math.sqrt(a[1][0]**2+a[1][1]**2)
+    print(x)
+    #cos_theta=z/(x*y)
+    #print(cos_theta/math.pi)
+    angle=math.acos(z/(x*y))
+    print(angle)
+    angle=(angle*180)/math.pi
+    if(angle<0):
+        angle+=180
+    print(angle)
     ## Your Code goes here
     ###########################
     cv2.imshow("window", ip_image)
